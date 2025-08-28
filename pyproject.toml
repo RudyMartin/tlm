@@ -6,15 +6,15 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = []
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Rudy Martin", email = "rudy@nextshiftconsulting.com"}
 ]
-license = {text = "MIT"}
+license = {text = "CC BY 4.0"}
 keywords = ["data science", "machine learning", "teaching", "numpy-free", "pure python"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Education",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "License :: OSI Approved :: MIT License",
+    "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
