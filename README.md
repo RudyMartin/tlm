@@ -5,7 +5,7 @@ A tiny, teachable library with a NumPy-like feel implemented **entirely in pure 
 
 ## Install (editable)
 ```bash
-pip install -e .
+pip install tlm
 ```
 
 ## Quick Start
