@@ -1,7 +1,7 @@
 # tlm (Teachable Learning Machine) - NumPy Replacement Module
 
 TLM (Teachable Learning Machine) - A tiny, teachable library with a NumPy-like feel implemented **entirely in pure Python**.
-This thin version of numpy contains classic Data Science algorithms for students and those who want smaller libraries with no dependencies.
+This thin version of NumPy contains classic Data Science algorithms for students and those who want smaller libraries with no dependencies.
 
 ## Install (editable)
 ```bash
