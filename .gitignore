@@ -6,6 +6,9 @@
 # =============================================================================
 
 CLAUDE.md
+MANIFEST*
+pyproject.toml
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
