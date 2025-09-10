@@ -1,50 +1,6 @@
 from __future__ import annotations
+import math, random, builtins
 from typing import List, Sequence, Tuple, Callable, Union
-
-# Pure built-in math functions (no imports)
-def _pure_sqrt(x: float) -> float:
-    """Square root using Newton's method"""
-    if x < 0:
-        raise ValueError("sqrt of negative number")
-    if x == 0:
-        return 0.0
-    
-    # Newton's method: x_new = (x + n/x) / 2
-    guess = x
-    for _ in range(20):
-        new_guess = (guess + x / guess) / 2
-        if abs(new_guess - guess) < 1e-15:
-            return new_guess
-        guess = new_guess
-    return guess
-
-def _pure_max(*args):
-    """Pure max function"""
-    if len(args) == 1 and hasattr(args[0], '__iter__') and not isinstance(args[0], str):
-        args = args[0]
-    
-    if not args:
-        raise ValueError("max() arg is an empty sequence")
-    
-    result = args[0]
-    for item in args[1:]:
-        if item > result:
-            result = item
-    return result
-
-def _pure_min(*args):
-    """Pure min function"""
-    if len(args) == 1 and hasattr(args[0], '__iter__') and not isinstance(args[0], str):
-        args = args[0]
-    
-    if not args:
-        raise ValueError("min() arg is an empty sequence")
-    
-    result = args[0]
-    for item in args[1:]:
-        if item < result:
-            result = item
-    return result
 
 Scalar = Union[int, float]
 Vector = List[Scalar]
@@ -99,14 +55,14 @@ def eye(n: int) -> Matrix:
 # Elementwise helpers
 # -----------------------
 
+def _is_scalar(x):
+    return not isinstance(x, list)
+
 def _is_vec(x):
     return isinstance(x, list) and (len(x) == 0 or not isinstance(x[0], list))
 
 def _is_mat(x):
     return isinstance(x, list) and (len(x) > 0 and isinstance(x[0], list))
-
-def _is_scalar(x):
-    return not isinstance(x, list)
 
 def _apply1(x, f: Callable[[Scalar], Scalar]):
     if isinstance(x, list):
@@ -142,15 +98,15 @@ def div(x, y):
 
 def exp(x):
     """Apply exponential function elementwise."""
-    return _apply1(x, _pure_exp)
+    return _apply1(x, math.exp)
 
 def log(x):
     """Apply natural logarithm elementwise."""
-    return _apply1(x, lambda z: -1e30 if z <= 0 else _pure_ln(z))
+    return _apply1(x, lambda z: -1e30 if z <= 0 else math.log(z))
 
 def sqrt(x):
     """Apply square root elementwise."""
-    return _apply1(x, _pure_sqrt)
+    return _apply1(x, math.sqrt)
 
 def clip(x, lo, hi):
     """Clip values to range [lo, hi]."""
@@ -166,22 +122,13 @@ def sum(x, axis: int | None = None) -> Union[Scalar, Vector]:
         if _is_vec(x):
             return float(_sum1d(x))
         elif _is_mat(x):
-            total = 0.0
-            for row in x:
-                total += _sum1d(row)
-            return total
+            return float(sum(_sum1d(row) for row in x))
         else:
             return float(x)
     else:
         if axis == 0 and _is_mat(x):
             n, m = shape(x)
-            result = []
-            for j in range(m):
-                col_sum = 0.0
-                for i in range(n):
-                    col_sum += x[i][j]
-                result.append(col_sum)
-            return result
+            return [float(sum(x[i][j] for i in range(n))) for j in range(m)]
         if axis == 1 and _is_mat(x):
             return [float(_sum1d(row)) for row in x]
         raise ValueError("axis out of range or invalid for input")
@@ -196,29 +143,24 @@ def mean(x, axis: int | None = None):
     """Compute mean along axis or all elements."""
     if axis is None:
         if _is_vec(x):
-            return _sum1d(x) / len(x)
+            return sum(x) / len(x)
         elif _is_mat(x):
             n, m = shape(x)
-            total = 0.0
-            for row in x:
-                total += _sum1d(row)
-            return total / (n * m)
+            return sum(x) / (n * m)
         else:
             return float(x)
     if axis == 0:
         n, m = shape(x)
-        return [_sum1d([x[i][j] for i in range(n)]) / n for j in range(m)]
+        return [sum([x[i][j] for i in range(n)]) / n for j in range(m)]
     if axis == 1:
-        return [_sum1d(row) / len(row) for row in x]
+        return [sum(row) / len(row) for row in x]
     raise ValueError("axis out of range")
 
 def var(x, axis: int | None = None, ddof: int = 0):
-    """Compute variance along axis or all elements - handles scalars, vectors, matrices."""
+    """Compute variance along axis or all elements."""
     if axis is None:
         mu = mean(x)
-        if _is_scalar(x):
-            return 0.0  # Scalar has no variance from itself
-        elif _is_vec(x):
+        if _is_vec(x):
             return sum([(a - mu) ** 2 for a in x]) / (len(x) - ddof)
         elif _is_mat(x):
             n, m = shape(x)
@@ -236,114 +178,67 @@ def var(x, axis: int | None = None, ddof: int = 0):
 def std(x, axis: int | None = None, ddof: int = 0):
     """Compute standard deviation along axis or all elements."""
     if axis is None:
-        return _pure_sqrt(var(x, axis=None, ddof=ddof))
+        return math.sqrt(var(x, axis=None, ddof=ddof))
     v = var(x, axis=axis, ddof=ddof)
     if isinstance(v, list):
-        return [_pure_sqrt(a) for a in v]
-    return _pure_sqrt(v)
+        return [math.sqrt(a) for a in v]
+    return math.sqrt(v)
 
 def max(x, axis: int | None = None):
     """Compute maximum along axis or all elements."""
     if axis is None:
         if _is_vec(x):
-            return float(_pure_max(x))
+            return float(builtins.max(x))
         elif _is_mat(x):
-            return float(_pure_max([_pure_max(row) for row in x]))
+            return float(builtins.max([builtins.max(row) for row in x]))
         return float(x)
     if axis == 0:
         n, m = shape(x)
-        return [float(_pure_max([x[i][j] for i in range(n)])) for j in range(m)]
+        return [float(builtins.max([x[i][j] for i in range(n)])) for j in range(m)]
     if axis == 1:
-        return [float(_pure_max(row)) for row in x]
+        return [float(builtins.max(row)) for row in x]
     raise ValueError("axis out of range")
 
 def min(x, axis: int | None = None):
     """Compute minimum along axis or all elements."""
     if axis is None:
         if _is_vec(x):
-            return float(_pure_min(x))
+            return float(builtins.min(x))
         elif _is_mat(x):
-            return float(_pure_min([_pure_min(row) for row in x]))
+            return float(builtins.min([builtins.min(row) for row in x]))
         return float(x)
     if axis == 0:
         n, m = shape(x)
-        return [float(_pure_min([x[i][j] for i in range(n)])) for j in range(m)]
+        return [float(builtins.min([x[i][j] for i in range(n)])) for j in range(m)]
     if axis == 1:
-        return [float(_pure_min(row)) for row in x]
+        return [float(builtins.min(row)) for row in x]
     raise ValueError("axis out of range")
 
 def argmax(x, axis: int = -1):
-    """Compute indices of maximum values along axis - handles scalars, vectors, matrices."""
-    # Handle scalar case
-    if _is_scalar(x):
-        return 0  # Only one element, so index is 0
-    
-    # Handle vector case
+    """Compute indices of maximum values along axis."""
     if _is_vec(x):
-        if len(x) == 0:
-            raise ValueError("argmax of empty array")
-        max_idx = 0
-        max_val = x[0]
-        for i in range(1, len(x)):
-            if x[i] > max_val:
-                max_val = x[i]
-                max_idx = i
-        return max_idx
-    
-    # Handle matrix case
+        return int(max(range(len(x)), key=lambda i: x[i]))
     if _is_mat(x):
-        if axis in (-1, 1):  # argmax along rows
-            return [argmax(row) for row in x]
-        if axis == 0:  # argmax along columns
+        if axis in (-1, 1):
+            return [int(max(range(len(row)), key=lambda j: row[j])) for row in x]
+        if axis == 0:
             n, m = shape(x)
-            result = []
-            for j in range(m):
-                max_idx = 0
-                max_val = x[0][j]
-                for i in range(1, n):
-                    if x[i][j] > max_val:
-                        max_val = x[i][j]
-                        max_idx = i
-                result.append(max_idx)
-            return result
-    
+            return [int(max(range(n), key=lambda i: x[i][j])) for j in range(m)]
     raise ValueError("axis out of range or invalid for input")
 
 # -----------------------
 # Linear algebra basics
 # -----------------------
 
-def transpose(A):
-    """Transpose a matrix, vector, or scalar - handles all input types."""
-    if _is_scalar(A):
-        return A  # Scalar transpose is itself
-    elif _is_vec(A):
-        # Convert vector to column matrix
-        return [[x] for x in A]
-    elif _is_mat(A):
-        n, m = shape(A)
-        return [[A[i][j] for i in range(n)] for j in range(m)]
-    else:
-        raise ValueError("transpose: unsupported input type")
+def transpose(A: Matrix) -> Matrix:
+    """Transpose a matrix."""
+    n, m = shape(A)
+    return [[A[i][j] for i in range(n)] for j in range(m)]
 
-def dot(a, b):
-    """Compute dot product - handles vectors or matrices like numpy.dot
-    
-    For vectors: returns scalar dot product
-    For matrices: delegates to matmul for matrix multiplication
-    """
-    # Check if both are vectors (1D)
-    if _is_vec(a) and _is_vec(b):
-        assert len(a) == len(b), "shape mismatch for dot"
-        return sum([a[i] * b[i] for i in range(len(a))])
-    
-    # If either is a matrix (2D), use matrix multiplication
-    elif _is_mat(a) or _is_mat(b):
-        return matmul(a, b)
-    
-    # Handle scalar cases
-    else:
-        return float(a) * float(b)
+def dot(a: Vector, b: Vector) -> float:
+    """Compute dot product of two vectors."""
+    assert len(a) == len(b), "shape mismatch for dot"
+    return sum([a[i] * b[i] for i in range(len(a))])
 
 def matmul(A: Matrix, B: Matrix) -> Matrix:
     """Compute matrix multiplication."""
@@ -357,35 +252,22 @@ def matmul(A: Matrix, B: Matrix) -> Matrix:
             C[i][j] = dot(A[i], BT[j])
     return C
 
-def norm(v, ord: int = 2) -> float:
-    """Compute norm - handles scalars, vectors (vector norm), matrices (Frobenius norm)."""
-    if _is_scalar(v):
-        return abs(float(v))  # Scalar norm is absolute value
-    elif _is_vec(v):
-        # Vector norm
-        if ord == 2:
-            return _pure_sqrt(sum([x*x for x in v]))
-        if ord == 1:
-            return sum([abs(x) for x in v])
-        raise NotImplementedError
-    elif _is_mat(v):
-        # Matrix Frobenius norm (default for matrices)
-        total = 0.0
-        for row in v:
-            for x in row:
-                total += x * x
-        return _pure_sqrt(total)
-    else:
-        raise ValueError("norm: unsupported input type")
+def norm(v: Vector, ord: int = 2) -> float:
+    """Compute vector norm."""
+    if ord == 2:
+        return math.sqrt(sum([x*x for x in v]))
+    if ord == 1:
+        return sum([abs(x) for x in v])
+    raise NotImplementedError
 
 def l2_normalize(X, axis: int = -1, eps: float = 1e-12):
     """Apply L2 normalization along axis."""
     if _is_vec(X):
-        nrm = _pure_max(norm(X), eps)
+        nrm = builtins.max(norm(X), eps)
         return [x / nrm for x in X]
     out = []
     for row in X:
-        nrm = _pure_max(norm(row), eps)
+        nrm = builtins.max(norm(row), eps)
         out.append([x / nrm for x in row])
     return out
 
@@ -393,19 +275,14 @@ def l2_normalize(X, axis: int = -1, eps: float = 1e-12):
 # Shape manipulation
 # -----------------------
 
-def flatten(x) -> Vector:
-    """Flatten array to 1D - handles scalars, vectors, matrices."""
-    if _is_scalar(x):
-        return [float(x)]  # Scalar becomes single-element list
-    elif _is_vec(x):
-        return x[:]  # Vector copy
-    elif _is_mat(x):
-        result = []
-        for row in x:
-            result.extend(row)
-        return result
-    else:
-        raise ValueError("flatten: unsupported input type")
+def flatten(x: Union[Vector, Matrix]) -> Vector:
+    """Flatten array to 1D."""
+    if _is_vec(x):
+        return x[:]
+    result = []
+    for row in x:
+        result.extend(row)
+    return result
 
 def reshape(x: Union[Vector, Matrix], new_shape: Union[int, Tuple[int, ...]]) -> Union[Vector, Matrix]:
     """Reshape array to new dimensions."""
@@ -491,264 +368,705 @@ def concatenate(arrays: List[Union[Vector, Matrix]], axis: int = 0) -> Union[Vec
     raise ValueError("All arrays must have same dimensionality")
 
 # -----------------------
-# Classic Random Number Generators (Historical Definitions)
+# Distance & Similarity Metrics
 # -----------------------
-#
-# HISTORICAL CONTEXT & ALGORITHM CHOICE:
-#
-# 1. Linear Congruential Generator (LCG):
-#    - Invented by D.H. Lehmer (1951) 
-#    - Park & Miller "Minimal Standard" (1988) refined parameters
-#    - Original: X(n+1) = (16807 * X(n)) mod (2^31 - 1)
-#    - Why this variant: Well-studied, passes basic statistical tests
-#    - Historical significance: First practical PRNG, used in early computers
-#
-# 2. Xorshift:
-#    - Invented by George Marsaglia (2003)
-#    - Original 32-bit version: x ^= x << 13; x ^= x >> 17; x ^= x << 5
-#    - Why this variant: Simple, fast, good statistical properties
-#    - Modern alternative to flawed early generators like Middle Square
-#
-# 3. Box-Muller Transform:
-#    - Invented by Box & Muller (1958), refined by Marsaglia (1964)
-#    - Converts uniform random to Gaussian using polar coordinates
-#    - Classic formula: Z₁ = √(-2 ln U₁) cos(2π U₂), Z₂ = √(-2 ln U₁) sin(2π U₂)
-#    - Why this method: Mathematically exact, widely recognized standard
-#
-# PURE IMPLEMENTATION RATIONALE:
-# - No imports (even math/random) maintains TLM's zero-dependency sovereignty
-# - Hand-coded Taylor series for sin/cos/ln/exp preserves algorithmic transparency
-# - Classic historical algorithms chosen for educational & reference value
-# - Provides complete NumPy.random replacement without external dependencies
 
-# Global state for random generators (modernized)
-_rng_state = {'lcg': None, 'xorshift': None, 'initialized': False}
-
-def _get_entropy_seed():
-    """Get high-entropy seed using only built-ins (modern practice)"""
-    # Use current time in microseconds + memory address hash for entropy
-    # This provides much better randomness than fixed seeds
-    import time
-    time_seed = int((time.time() * 1000000) % (2**31))
+def cosine_similarity(a: Vector, b: Vector) -> float:
+    """Compute cosine similarity between two vectors."""
+    assert len(a) == len(b), "Vectors must have same length"
     
-    # Mix in object memory addresses for additional entropy
-    obj_hash = hash(str(id([]))) & 0x7FFFFFFF
+    dot_product = builtins.sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(builtins.sum(x * x for x in a))
+    norm_b = math.sqrt(builtins.sum(y * y for y in b))
     
-    # Simple mixing function (modern technique)
-    mixed = time_seed ^ (obj_hash << 13) ^ (obj_hash >> 19)
-    mixed = mixed & 0x7FFFFFFF  # Keep positive 31-bit
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
     
-    return mixed if mixed != 0 else 1
+    return dot_product / (norm_a * norm_b)
 
-def _mix_seed(seed):
-    """Mix seed for better distribution (modern practice)"""
-    # Simple hash mixing to improve seed quality
-    seed = seed & 0x7FFFFFFF  # Ensure positive
-    seed ^= seed >> 16
-    seed = (seed * 0x85ebca6b) & 0x7FFFFFFF
-    seed ^= seed >> 13
-    seed = (seed * 0xc2b2ae35) & 0x7FFFFFFF
-    seed ^= seed >> 16
-    return seed if seed != 0 else 1
+def euclidean_distance(a: Vector, b: Vector) -> float:
+    """Compute Euclidean distance between two vectors."""
+    assert len(a) == len(b), "Vectors must have same length"
+    return math.sqrt(builtins.sum((x - y) ** 2 for x, y in zip(a, b)))
 
-def seed_rng(seed=None):
+def manhattan_distance(a: Vector, b: Vector) -> float:
+    """Compute Manhattan (L1) distance between two vectors."""
+    assert len(a) == len(b), "Vectors must have same length"
+    return builtins.sum(builtins.abs(x - y) for x, y in zip(a, b))
+
+def hamming_distance(a: Vector, b: Vector) -> int:
+    """Compute Hamming distance between two vectors."""
+    assert len(a) == len(b), "Vectors must have same length"
+    return builtins.sum(1 for x, y in zip(a, b) if x != y)
+
+# -----------------------
+# Additional Math Operations
+# -----------------------
+
+def power(x, p):
+    """Raise elements to power p."""
+    return _apply1(x, lambda z: z ** p)
+
+def abs(x):
+    """Compute absolute value elementwise."""
+    return _apply1(x, lambda z: builtins.abs(z))
+
+def sign(x):
+    """Compute sign of elements (-1, 0, 1)."""
+    return _apply1(x, lambda z: 1 if z > 0 else (-1 if z < 0 else 0))
+
+# -----------------------
+# Statistical Functions
+# -----------------------
+
+def median(x: Union[Vector, Matrix], axis: int | None = None) -> Union[float, Vector]:
+    """Compute median along axis or all elements."""
+    if axis is None:
+        # Flatten all elements and find median
+        if _is_vec(x):
+            sorted_x = sorted(x)
+        elif _is_mat(x):
+            sorted_x = sorted([val for row in x for val in row])
+        else:
+            return float(x)
+        
+        n = len(sorted_x)
+        if n % 2 == 0:
+            return (sorted_x[n//2 - 1] + sorted_x[n//2]) / 2.0
+        return float(sorted_x[n//2])
+    
+    if _is_mat(x):
+        if axis == 0:
+            # Median across rows for each column
+            n, m = shape(x)
+            result = []
+            for j in range(m):
+                col = sorted([x[i][j] for i in range(n)])
+                if n % 2 == 0:
+                    result.append((col[n//2 - 1] + col[n//2]) / 2.0)
+                else:
+                    result.append(float(col[n//2]))
+            return result
+        elif axis == 1:
+            # Median across columns for each row
+            result = []
+            for row in x:
+                sorted_row = sorted(row)
+                m = len(sorted_row)
+                if m % 2 == 0:
+                    result.append((sorted_row[m//2 - 1] + sorted_row[m//2]) / 2.0)
+                else:
+                    result.append(float(sorted_row[m//2]))
+            return result
+    
+    raise ValueError("Invalid axis for input")
+
+def percentile(x: Union[Vector, Matrix], q: float, axis: int | None = None) -> Union[float, Vector]:
+    """Compute the q-th percentile (0-100) along axis or all elements."""
+    assert 0 <= q <= 100, "Percentile must be between 0 and 100"
+    
+    if axis is None:
+        # Flatten all elements
+        if _is_vec(x):
+            sorted_x = sorted(x)
+        elif _is_mat(x):
+            sorted_x = sorted([val for row in x for val in row])
+        else:
+            return float(x)
+        
+        n = len(sorted_x)
+        k = (n - 1) * q / 100.0
+        f = math.floor(k)
+        c = math.ceil(k)
+        
+        if f == c:
+            return sorted_x[int(k)]
+        
+        d0 = sorted_x[int(f)] * (c - k)
+        d1 = sorted_x[int(c)] * (k - f)
+        return d0 + d1
+    
+    if _is_mat(x):
+        if axis == 0:
+            # Percentile across rows for each column
+            n, m = shape(x)
+            result = []
+            for j in range(m):
+                col = sorted([x[i][j] for i in range(n)])
+                k = (n - 1) * q / 100.0
+                f = math.floor(k)
+                c = math.ceil(k)
+                
+                if f == c:
+                    result.append(col[int(k)])
+                else:
+                    d0 = col[int(f)] * (c - k)
+                    d1 = col[int(c)] * (k - f)
+                    result.append(d0 + d1)
+            return result
+        elif axis == 1:
+            # Percentile across columns for each row
+            result = []
+            for row in x:
+                sorted_row = sorted(row)
+                m = len(sorted_row)
+                k = (m - 1) * q / 100.0
+                f = math.floor(k)
+                c = math.ceil(k)
+                
+                if f == c:
+                    result.append(sorted_row[int(k)])
+                else:
+                    d0 = sorted_row[int(f)] * (c - k)
+                    d1 = sorted_row[int(c)] * (k - f)
+                    result.append(d0 + d1)
+            return result
+    
+    raise ValueError("Invalid axis for input")
+
+def correlation(x: Vector, y: Vector) -> float:
+    """Compute Pearson correlation coefficient between two vectors."""
+    assert len(x) == len(y), "Vectors must have same length"
+    
+    n = len(x)
+    if n == 0:
+        return 0.0
+    
+    mean_x = builtins.sum(x) / n
+    mean_y = builtins.sum(y) / n
+    
+    cov = builtins.sum((x[i] - mean_x) * (y[i] - mean_y) for i in range(n))
+    std_x = math.sqrt(builtins.sum((x[i] - mean_x) ** 2 for i in range(n)))
+    std_y = math.sqrt(builtins.sum((y[i] - mean_y) ** 2 for i in range(n)))
+    
+    if std_x == 0 or std_y == 0:
+        return 0.0
+    
+    return cov / (std_x * std_y)
+
+def covariance_matrix(X: Matrix) -> Matrix:
+    """Compute covariance matrix of data matrix X (samples x features)."""
+    n, m = shape(X)
+    
+    # Center the data
+    means = mean(X, axis=0)
+    X_centered = [[X[i][j] - means[j] for j in range(m)] for i in range(n)]
+    
+    # Compute covariance matrix
+    cov = zeros((m, m))
+    for i in range(m):
+        for j in range(m):
+            cov[i][j] = builtins.sum(X_centered[k][i] * X_centered[k][j] for k in range(n)) / (n - 1)
+    
+    return cov
+
+# -----------------------
+# Array Manipulation
+# -----------------------
+
+def unique(x: Union[Vector, Matrix]) -> Vector:
+    """Get unique elements from array."""
+    if _is_vec(x):
+        seen = set()
+        result = []
+        for val in x:
+            if val not in seen:
+                seen.add(val)
+                result.append(val)
+        return result
+    elif _is_mat(x):
+        seen = set()
+        result = []
+        for row in x:
+            for val in row:
+                if val not in seen:
+                    seen.add(val)
+                    result.append(val)
+        return result
+    return [x]
+
+def where(condition: Union[Vector, Matrix], x=None, y=None) -> Union[List[int], Union[Vector, Matrix]]:
+    """Return indices where condition is True, or choose x/y based on condition."""
+    if x is None and y is None:
+        # Return indices where condition is True
+        if _is_vec(condition):
+            return [i for i, val in enumerate(condition) if val]
+        elif _is_mat(condition):
+            indices = []
+            for i, row in enumerate(condition):
+                for j, val in enumerate(row):
+                    if val:
+                        indices.append([i, j])
+            return indices
+        return []
+    
+    # Choose between x and y based on condition
+    if _is_vec(condition):
+        return [x[i] if condition[i] else y[i] for i in range(len(condition))]
+    elif _is_mat(condition):
+        result = []
+        for i, row in enumerate(condition):
+            result.append([x[i][j] if condition[i][j] else y[i][j] for j in range(len(row))])
+        return result
+    
+    return x if condition else y
+
+def tile(x: Union[Vector, Matrix], reps: Union[int, Tuple[int, int]]) -> Union[Vector, Matrix]:
+    """Repeat array along axes."""
+    if isinstance(reps, int):
+        # 1D tiling
+        if _is_vec(x):
+            result = []
+            for _ in range(reps):
+                result.extend(x)
+            return result
+        elif _is_mat(x):
+            result = []
+            for _ in range(reps):
+                result.extend(x)
+            return result
+    elif isinstance(reps, tuple) and len(reps) == 2:
+        # 2D tiling
+        reps_y, reps_x = reps
+        if _is_vec(x):
+            # Treat vector as row vector for 2D tiling
+            result = []
+            row = []
+            for _ in range(reps_x):
+                row.extend(x)
+            for _ in range(reps_y):
+                result.append(row[:])
+            return result
+        elif _is_mat(x):
+            result = []
+            for _ in range(reps_y):
+                for row in x:
+                    new_row = []
+                    for _ in range(reps_x):
+                        new_row.extend(row)
+                    result.append(new_row)
+            return result
+    
+    raise ValueError("Invalid reps argument")
+
+def stack(arrays: List[Vector], axis: int = 0) -> Matrix:
+    """Stack vectors into matrix along new axis."""
+    if not arrays:
+        return []
+    
+    if axis == 0:
+        # Stack as rows
+        return [arr[:] for arr in arrays]
+    elif axis == 1:
+        # Stack as columns
+        n = len(arrays[0])
+        if not all(len(arr) == n for arr in arrays):
+            raise ValueError("All arrays must have same length for axis=1 stacking")
+        return transpose([arr[:] for arr in arrays])
+    else:
+        raise ValueError(f"Invalid axis {axis}")
+
+def vstack(arrays: List[Union[Vector, Matrix]]) -> Matrix:
+    """Stack arrays vertically (row-wise)."""
+    result = []
+    for arr in arrays:
+        if _is_vec(arr):
+            result.append(arr[:])
+        elif _is_mat(arr):
+            result.extend(arr)
+        else:
+            result.append([arr])
+    return result
+
+def hstack(arrays: List[Union[Vector, Matrix]]) -> Union[Vector, Matrix]:
+    """Stack arrays horizontally (column-wise)."""
+    if all(_is_vec(arr) for arr in arrays):
+        # Concatenate vectors
+        result = []
+        for arr in arrays:
+            result.extend(arr)
+        return result
+    
+    # Convert all to matrices and stack columns
+    matrices = []
+    for arr in arrays:
+        if _is_vec(arr):
+            # Convert vector to column matrix
+            matrices.append([[val] for val in arr])
+        elif _is_mat(arr):
+            matrices.append(arr)
+        else:
+            matrices.append([[arr]])
+    
+    # Check all have same number of rows
+    n_rows = len(matrices[0])
+    if not all(len(m) == n_rows for m in matrices):
+        raise ValueError("All arrays must have same number of rows for horizontal stacking")
+    
+    # Concatenate columns
+    result = []
+    for i in range(n_rows):
+        row = []
+        for m in matrices:
+            row.extend(m[i])
+        result.append(row)
+    
+    return result
+
+# -----------------------
+# Special Functions for Transformers
+# -----------------------
+
+def positional_encoding(seq_len: int, d_model: int, base: float = 10000.0) -> Matrix:
+    """Generate sinusoidal positional encoding for transformer models."""
+    encoding = zeros((seq_len, d_model))
+    
+    for pos in range(seq_len):
+        for i in range(d_model):
+            if i % 2 == 0:
+                # Even indices: sin
+                encoding[pos][i] = math.sin(pos / (base ** (i / d_model)))
+            else:
+                # Odd indices: cos
+                encoding[pos][i] = math.cos(pos / (base ** ((i - 1) / d_model)))
+    
+    return encoding
+
+
+# -----------------------
+# Missing Core Functions 
+# -----------------------
+
+def histogram(x: Vector, bins: Union[int, Vector] = 10, range_: Optional[Tuple[float, float]] = None) -> Tuple[Vector, Vector]:
     """
-    Seed all random number generators (modernized).
+    Compute histogram of data.
     
     Args:
-        seed: Integer seed value, or None for high-entropy auto-seeding
-              
-    Modern improvements over historical practice:
-    - None default uses system entropy (not fixed 1)
-    - Seed mixing improves distribution quality
-    - Separate initialization prevents bad defaults
-    """
-    global _rng_state
-    
-    if seed is None:
-        # Modern practice: High-entropy default seeding
-        entropy_seed = _get_entropy_seed()
-        mixed_seed = _mix_seed(entropy_seed)
-    else:
-        # User-provided seed with modern mixing
-        mixed_seed = _mix_seed(abs(int(seed)))
-    
-    _rng_state['lcg'] = mixed_seed
-    _rng_state['xorshift'] = mixed_seed ^ 0x12345678  # Different initial states
-    _rng_state['initialized'] = True
-
-def _ensure_initialized():
-    """Ensure RNG is initialized with modern entropy (lazy initialization)"""
-    if not _rng_state['initialized']:
-        seed_rng()  # Auto-seed with entropy
-
-def lcg_random() -> float:
-    """Linear Congruential Generator - Park & Miller "Minimal Standard" (1988)
-    
-    Modern enhancement: Entropy-based auto-seeding on first use
-    Historical algorithm: Lehmer (1951) / Park & Miller (1988) parameters
-    """
-    _ensure_initialized()
-    # Classic parameters: a=16807, m=2^31-1 (Lehmer, 1951 / Park & Miller, 1988)
-    _rng_state['lcg'] = (16807 * _rng_state['lcg']) % (2**31 - 1)
-    return _rng_state['lcg'] / (2**31 - 1)
-
-def xorshift_random() -> float:
-    """Classic Xorshift - Marsaglia (2003) original 32-bit version
-    
-    Modern enhancement: Entropy-based auto-seeding on first use
-    Historical algorithm: Marsaglia (2003) original bit shifts
-    """
-    _ensure_initialized()
-    x = _rng_state['xorshift']
-    x ^= x << 13
-    x ^= x >> 17
-    x ^= x << 5
-    x &= 0xFFFFFFFF  # Keep 32-bit
-    _rng_state['xorshift'] = x
-    return x / (2**32)
-
-def random_uniform(low: float = 0.0, high: float = 1.0, size: Union[int, Tuple[int, int], None] = None) -> Union[float, Vector, Matrix]:
-    """Generate uniform random numbers using LCG
-    
-    Modern enhancement: Entropy-based auto-seeding on first use
-    Compatible with numpy.random.uniform API
-    """
-    _ensure_initialized()
-    def _single():
-        return low + (high - low) * lcg_random()
-    
-    if size is None:
-        return _single()
-    elif isinstance(size, int):
-        return [_single() for _ in range(size)]
-    else:
-        n, m = size
-        return [[_single() for _ in range(m)] for _ in range(n)]
-
-def random_normal(mean: float = 0.0, std: float = 1.0, size: Union[int, Tuple[int, int], None] = None) -> Union[float, Vector, Matrix]:
-    """Generate normal random numbers using Box-Muller Transform (1958)
-    
-    Modern enhancement: Entropy-based auto-seeding on first use
-    Historical algorithm: Box & Muller (1958) polar transform
-    Compatible with numpy.random.normal API
-    """
-    _ensure_initialized()
-    # Classic Box-Muller polar method
-    def _pair():
-        u1 = lcg_random()
-        u2 = lcg_random()
-        # Avoid log(0) 
-        u1 = _pure_max(u1, 1e-10)
+        x: Input data
+        bins: Number of bins (int) or bin edges (list)
+        range_: (min, max) range for bins
         
-        # Box-Muller transform using pure math (no imports)
-        r = (-2 * _pure_ln(u1)) ** 0.5
-        theta = 2 * 3.14159265358979323846 * u2
-        z1 = r * _pure_cos(theta)
-        z2 = r * _pure_sin(theta)
-        return mean + std * z1, mean + std * z2
-    
-    if size is None:
-        return _pair()[0]
-    elif isinstance(size, int):
-        result = []
-        for i in range(0, size, 2):
-            z1, z2 = _pair()
-            result.append(z1)
-            if len(result) < size:
-                result.append(z2)
-        return result[:size]
-    else:
-        n, m = size
-        total = n * m
-        flat = []
-        for i in range(0, total, 2):
-            z1, z2 = _pair()
-            flat.append(z1)
-            if len(flat) < total:
-                flat.append(z2)
-        flat = flat[:total]
-        return [flat[i*m:(i+1)*m] for i in range(n)]
-
-def random_choice(array: Vector, size: Union[int, None] = None) -> Union[Scalar, Vector]:
-    """Random choice from array
-    
-    Modern enhancement: Entropy-based auto-seeding on first use
-    Compatible with numpy.random.choice API
+    Returns:
+        (counts, bin_edges)
     """
-    _ensure_initialized()
-    if size is None:
-        idx = int(lcg_random() * len(array))
-        return array[idx]
+    if not x:
+        return [], []
+        
+    if isinstance(bins, int):
+        # Auto-generate bin edges
+        if range_ is None:
+            x_min, x_max = min(x), max(x)
+        else:
+            x_min, x_max = range_
+            
+        if x_max == x_min:
+            x_max = x_min + 1.0  # Handle constant data
+            
+        width = (x_max - x_min) / bins
+        bin_edges = [x_min + i * width for i in range(bins + 1)]
     else:
-        return [array[int(lcg_random() * len(array))] for _ in range(size)]
+        # User-provided bin edges
+        bin_edges = list(bins)
+        bins = len(bin_edges) - 1
+    
+    # Count values in each bin
+    counts = [0] * bins
+    for val in x:
+        # Find which bin this value belongs to
+        for i in range(bins):
+            if bin_edges[i] <= val < bin_edges[i + 1]:
+                counts[i] += 1
+                break
+            elif i == bins - 1 and val == bin_edges[i + 1]:
+                # Handle edge case: value equals maximum
+                counts[i] += 1
+                break
+    
+    return counts, bin_edges
 
-# Pure math functions (no imports)
-def _pure_ln(x: float) -> float:
-    """Natural logarithm using Newton's method"""
-    if x <= 0:
-        raise ValueError("ln undefined for x <= 0")
-    if x == 1:
-        return 0.0
-    
-    # Newton's method: y = ln(x), e^y = x
-    # f(y) = e^y - x, f'(y) = e^y
-    # y_new = y - f(y)/f'(y) = y - (e^y - x)/e^y = y - 1 + x/e^y
-    y = x - 1  # Initial guess
-    for _ in range(20):  # Usually converges quickly
-        ey = _pure_exp(y)
-        y_new = y - 1 + x / ey
-        if abs(y_new - y) < 1e-15:
-            break
-        y = y_new
-    return y
 
-def _pure_exp(x: float) -> float:
-    """Exponential function using Taylor series"""
-    if x > 700:  # Prevent overflow
-        return float('inf')
-    if x < -700:
-        return 0.0
+def allclose(x: Union[Vector, Matrix], y: Union[Vector, Matrix], 
+             rtol: float = 1e-5, atol: float = 1e-8) -> bool:
+    """
+    Test if arrays are element-wise close within tolerances.
     
-    result = 1.0
-    term = 1.0
-    for i in range(1, 150):  # Taylor series
-        term *= x / i
-        result += term
-        if abs(term) < 1e-15:
-            break
-    return result
+    Returns True if: |x - y| <= atol + rtol * |y|
+    """
+    if shape(x) != shape(y):
+        return False
+        
+    def _close_scalar(a: float, b: float) -> bool:
+        return abs(a - b) <= atol + rtol * abs(b)
+    
+    if _is_scalar(x):
+        return _close_scalar(x, y)
+    elif _is_vec(x):
+        return all(_close_scalar(a, b) for a, b in zip(x, y))
+    elif _is_mat(x):
+        for i in range(len(x)):
+            if not all(_close_scalar(a, b) for a, b in zip(x[i], y[i])):
+                return False
+        return True
+    
+    return False
 
-def _pure_cos(x: float) -> float:
-    """Cosine using Taylor series"""
-    # Reduce to [0, 2π]
-    pi = 3.14159265358979323846
-    x = x % (2 * pi)
-    
-    result = 1.0
-    term = 1.0
-    x_sq = x * x
-    
-    for i in range(1, 50):
-        term *= -x_sq / ((2*i-1) * (2*i))
-        result += term
-        if abs(term) < 1e-15:
-            break
-    return result
 
-def _pure_sin(x: float) -> float:
-    """Sine using Taylor series"""
-    # Reduce to [0, 2π]
-    pi = 3.14159265358979323846
-    x = x % (2 * pi)
+def searchsorted(a: Vector, v: Union[float, Vector], side: str = 'left') -> Union[int, Vector]:
+    """
+    Find indices to insert v in sorted array a to maintain order.
     
-    result = x
-    term = x
-    x_sq = x * x
+    Args:
+        a: Sorted array
+        v: Values to insert  
+        side: 'left' or 'right' for tie-breaking
+        
+    Returns:
+        Insertion indices
+    """
+    def _searchsorted_scalar(arr: Vector, val: float, left: bool = True) -> int:
+        """Binary search for insertion point."""
+        low, high = 0, len(arr)
+        
+        while low < high:
+            mid = (low + high) // 2
+            if left:
+                if arr[mid] < val:
+                    low = mid + 1
+                else:
+                    high = mid
+            else:  # right side
+                if arr[mid] <= val:
+                    low = mid + 1
+                else:
+                    high = mid
+        return low
     
-    for i in range(1, 50):
-        term *= -x_sq / ((2*i) * (2*i+1))
-        result += term
-        if abs(term) < 1e-15:
-            break
-    return result
+    left_side = (side == 'left')
+    
+    if _is_scalar(v):
+        return _searchsorted_scalar(a, v, left_side)
+    else:
+        return [_searchsorted_scalar(a, val, left_side) for val in v]
+
+
+def diff(x: Union[Vector, Matrix], n: int = 1, axis: Optional[int] = None) -> Union[Vector, Matrix]:
+    """
+    Calculate n-th discrete difference along given axis.
+    
+    Args:
+        x: Input array
+        n: Number of times to difference (default 1)
+        axis: Axis along which to difference (None for 1D)
+        
+    Returns:
+        Differenced array
+    """
+    if n < 0:
+        raise ValueError("diff order must be non-negative")
+    if n == 0:
+        return x
+        
+    if _is_vec(x):
+        result = x
+        for _ in range(n):
+            result = [result[i+1] - result[i] for i in range(len(result)-1)]
+        return result
+    elif _is_mat(x):
+        if axis == 0 or axis is None:
+            # Difference along rows (subtract row i from row i+1)
+            result = x
+            for _ in range(n):
+                new_result = []
+                for i in range(len(result)-1):
+                    diff_row = [result[i+1][j] - result[i][j] for j in range(len(result[i]))]
+                    new_result.append(diff_row)
+                result = new_result
+            return result
+        elif axis == 1:
+            # Difference along columns
+            result = x
+            for _ in range(n):
+                new_result = []
+                for row in result:
+                    diff_row = [row[j+1] - row[j] for j in range(len(row)-1)]
+                    new_result.append(diff_row)
+                result = new_result
+            return result
+        else:
+            raise ValueError("axis must be 0 or 1 for 2D arrays")
+    
+    return x
+
+
+def gradient(x: Union[Vector, Matrix], *varargs, axis: Optional[int] = None, 
+             edge_order: int = 1) -> Union[Vector, Matrix, List]:
+    """
+    Calculate numerical gradient using central differences.
+    
+    Args:
+        x: Input array
+        *varargs: Spacing between points (default 1)
+        axis: Axis for gradient (None means all axes for 2D)
+        edge_order: Accuracy order at boundaries (1 or 2)
+        
+    Returns:
+        Gradient array(s)
+    """
+    if edge_order not in [1, 2]:
+        raise ValueError("edge_order must be 1 or 2")
+        
+    def _gradient_1d(arr: Vector, spacing: float = 1.0) -> Vector:
+        """Calculate 1D gradient."""
+        n = len(arr)
+        if n < 2:
+            return [0.0] * n
+            
+        grad = [0.0] * n
+        
+        # Forward difference at start
+        if edge_order == 1:
+            grad[0] = (arr[1] - arr[0]) / spacing
+        else:  # edge_order == 2
+            if n >= 3:
+                grad[0] = (-3*arr[0] + 4*arr[1] - arr[2]) / (2 * spacing)
+            else:
+                grad[0] = (arr[1] - arr[0]) / spacing
+        
+        # Central differences in middle
+        for i in range(1, n-1):
+            grad[i] = (arr[i+1] - arr[i-1]) / (2 * spacing)
+        
+        # Backward difference at end
+        if edge_order == 1:
+            grad[n-1] = (arr[n-1] - arr[n-2]) / spacing  
+        else:  # edge_order == 2
+            if n >= 3:
+                grad[n-1] = (arr[n-3] - 4*arr[n-2] + 3*arr[n-1]) / (2 * spacing)
+            else:
+                grad[n-1] = (arr[n-1] - arr[n-2]) / spacing
+                
+        return grad
+    
+    # Handle spacing arguments
+    spacing = varargs[0] if varargs else 1.0
+    
+    if _is_vec(x):
+        return _gradient_1d(x, spacing)
+    elif _is_mat(x):
+        if axis == 0:
+            # Gradient along rows
+            result = []
+            for j in range(len(x[0])):  # For each column
+                column = [x[i][j] for i in range(len(x))]
+                grad_col = _gradient_1d(column, spacing)
+                result.append(grad_col)
+            # Transpose back
+            return [[result[j][i] for j in range(len(result))] for i in range(len(result[0]))]
+        elif axis == 1:
+            # Gradient along columns  
+            return [_gradient_1d(row, spacing) for row in x]
+        else:
+            # Return gradients for both axes
+            grad_0 = gradient(x, spacing, axis=0, edge_order=edge_order)
+            grad_1 = gradient(x, spacing, axis=1, edge_order=edge_order) 
+            return [grad_0, grad_1]
+    
+    return x
+
+
+def convolve(x: Vector, y: Vector, mode: str = 'full') -> Vector:
+    """
+    Discrete convolution of two sequences.
+    
+    Args:
+        x, y: Input sequences  
+        mode: 'full', 'same', or 'valid'
+        
+    Returns:
+        Convolved sequence
+    """
+    if not x or not y:
+        return []
+        
+    n, m = len(x), len(y)
+    
+    if mode == 'full':
+        # Full convolution: length n + m - 1
+        result = [0.0] * (n + m - 1)
+        for i in range(n):
+            for j in range(m):
+                result[i + j] += x[i] * y[j]
+        return result
+        
+    elif mode == 'same':
+        # Same size as larger input
+        full_conv = convolve(x, y, 'full')
+        if n >= m:
+            # Same size as x
+            start = (len(full_conv) - n) // 2
+            return full_conv[start:start + n]
+        else:
+            # Same size as y  
+            start = (len(full_conv) - m) // 2
+            return full_conv[start:start + m]
+            
+    elif mode == 'valid':
+        # Only where sequences fully overlap
+        if n < m:
+            x, y, n, m = y, x, m, n  # Ensure x is longer
+        if m == 0:
+            return []
+        result = [0.0] * (n - m + 1)
+        for i in range(n - m + 1):
+            for j in range(m):
+                result[i] += x[i + j] * y[j]
+        return result
+        
+    else:
+        raise ValueError("mode must be 'full', 'same', or 'valid'")
+
+
+# Enhanced numerical validation functions  
+def isfinite(x: Union[float, Vector, Matrix]) -> Union[bool, Vector, Matrix]:
+    """Test element-wise for finite values."""
+    import math
+    
+    def _isfinite_scalar(val):
+        return not (math.isinf(val) or math.isnan(val))
+    
+    if _is_scalar(x):
+        return _isfinite_scalar(x)
+    elif _is_vec(x):
+        return [_isfinite_scalar(val) for val in x]
+    elif _is_mat(x):
+        return [[_isfinite_scalar(val) for val in row] for row in x]
+    
+    return True
+
+
+def isinf(x: Union[float, Vector, Matrix]) -> Union[bool, Vector, Matrix]:
+    """Test element-wise for infinite values."""
+    import math
+    
+    if _is_scalar(x):
+        return math.isinf(x)
+    elif _is_vec(x):
+        return [math.isinf(val) for val in x]
+    elif _is_mat(x):
+        return [[math.isinf(val) for val in row] for row in x]
+    
+    return False
+
+
+def isnan(x: Union[float, Vector, Matrix]) -> Union[bool, Vector, Matrix]:
+    """Test element-wise for NaN values."""  
+    import math
+    
+    if _is_scalar(x):
+        return math.isnan(x)
+    elif _is_vec(x):
+        return [math.isnan(val) for val in x]
+    elif _is_mat(x):
+        return [[math.isnan(val) for val in row] for row in x]
+    
+    return False
