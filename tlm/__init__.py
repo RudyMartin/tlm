@@ -10,8 +10,8 @@ from .pure.ops import (
     sum as asum, mean, var, std, max as amax, min as amin, argmax,
     exp, log, sqrt, clip, norm, l2_normalize,
     flatten, reshape, concatenate,
-    # Random functions (from local)
-    seed_rng, random_uniform, random_normal, random_choice,
+    # Random functions (removed - not in GitHub version)
+    # seed_rng, random_uniform, random_normal, random_choice,
     # Distance & similarity metrics (from GitHub)
     cosine_similarity, euclidean_distance, manhattan_distance, hamming_distance,
     # Additional math operations (from GitHub)
@@ -196,8 +196,8 @@ __all__ = [
     'add','sub','mul','div','asum','mean','var','std','amax','amin','argmax',
     'exp','log','sqrt','clip','norm','l2_normalize',
     'flatten','reshape','concatenate',
-    # random (from local)
-    'seed_rng','random_uniform','random_normal','random_choice',
+    # random (removed - not in GitHub version)
+    # 'seed_rng','random_uniform','random_normal','random_choice',
     # distance & similarity (from GitHub)
     'cosine_similarity','euclidean_distance','manhattan_distance','hamming_distance',
     # additional math (from GitHub)
