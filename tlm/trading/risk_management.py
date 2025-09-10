@@ -8,8 +8,7 @@ AUC-ROC variants and trading-specific measures.
 
 from typing import List, Dict, Tuple, Optional, NamedTuple, Union
 import math
-import statistics
-from ..pure.ops import sum as asum
+from ..pure.ops import sum as asum, mean, median, std as stdev, var as variance
 
 # Type definitions
 PriceData = List[float]
@@ -151,7 +150,7 @@ def impute_missing_data(data: List[List[Optional[float]]],
         if method == 'mean':
             impute_value = asum(col_values) / len(col_values)
         elif method == 'median':
-            impute_value = statistics.median(col_values)
+            impute_value = median(col_values)
         elif method == 'mode':
             # For mode, find most frequent value
             from collections import Counter
@@ -344,7 +343,7 @@ def volatility_position_sizing(prices: PriceData, target_volatility: float = 0.1
                 returns.append(ret)
         
         if len(returns) > 1:
-            realized_vol = statistics.stdev(returns) * math.sqrt(252)  # Annualized
+            realized_vol = stdev(returns) * math.sqrt(252)  # Annualized
             
             # Scale position inversely with volatility
             position_size = target_volatility / max(realized_vol, 0.01)
@@ -366,7 +365,7 @@ def sharpe_ratio(returns: Returns, risk_free_rate: float = 0.02) -> float:
     
     mean_return = asum(returns) / len(returns)
     excess_return = mean_return - risk_free_rate / 252  # Daily risk-free rate
-    volatility = statistics.stdev(returns)
+    volatility = stdev(returns)
     
     if volatility == 0:
         return 0.0
@@ -387,7 +386,7 @@ def sortino_ratio(returns: Returns, risk_free_rate: float = 0.02) -> float:
     if len(negative_returns) < 2:
         return float('inf') if excess_return > 0 else 0.0
     
-    downside_deviation = statistics.stdev(negative_returns)
+    downside_deviation = stdev(negative_returns)
     
     if downside_deviation == 0:
         return float('inf') if excess_return > 0 else 0.0

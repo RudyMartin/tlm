@@ -7,7 +7,7 @@ Includes linear/polynomial fitting, changepoint detection, and trend metrics.
 
 from typing import List, Tuple, Optional, Dict, Union
 import math
-import statistics
+from ..pure.ops import mean, median, std as stdev, var as variance
 
 # Type definitions
 TimeSeries = List[float]
@@ -83,7 +83,7 @@ def polynomial_trend(series: TimeSeries, degree: int = 2,
     n = len(series)
     if n < degree + 1:
         # Fallback to constant trend
-        mean_val = statistics.mean(series) if series else 0.0
+        mean_val = mean(series) if series else 0.0
         model = {'coefficients': [mean_val] + [0.0] * degree, 'r_squared': 0.0, 'degree': degree}
         if return_residuals:
             residuals = [series[i] - mean_val for i in range(n)]
@@ -205,8 +205,8 @@ def trend_changepoints(series: TimeSeries, threshold: float = 0.1) -> List[int]:
     
     for i in range(window_size, len(slopes) - window_size):
         # Compare slopes before and after
-        before_slope = statistics.mean(slopes[i-window_size:i])
-        after_slope = statistics.mean(slopes[i:i+window_size])
+        before_slope = mean(slopes[i-window_size:i])
+        after_slope = mean(slopes[i:i+window_size])
         
         slope_change = abs(after_slope - before_slope)
         
@@ -215,8 +215,8 @@ def trend_changepoints(series: TimeSeries, threshold: float = 0.1) -> List[int]:
             is_peak = True
             for j in range(max(0, i-2), min(len(slopes), i+3)):
                 if j != i:
-                    other_change = abs(statistics.mean(slopes[j-window_size:j]) - 
-                                     statistics.mean(slopes[j:j+window_size])) if j >= window_size and j < len(slopes) - window_size else 0
+                    other_change = abs(mean(slopes[j-window_size:j]) - 
+                                     mean(slopes[j:j+window_size])) if j >= window_size and j < len(slopes) - window_size else 0
                     if other_change > slope_change:
                         is_peak = False
                         break
@@ -315,10 +315,10 @@ def trend_volatility(series: TimeSeries, window: int = 20,
         if len(window_data) < 2:
             vol = 0.0
         elif method == 'std':
-            vol = statistics.stdev(window_data)
+            vol = stdev(window_data)
         elif method == 'mad':
-            median = statistics.median(window_data)
-            vol = statistics.median([abs(x - median) for x in window_data])
+            median = median(window_data)
+            vol = median([abs(x - median) for x in window_data])
         elif method == 'range':
             vol = max(window_data) - min(window_data)
         else:
@@ -435,8 +435,8 @@ def _variance_changepoints(series: TimeSeries, min_length: int) -> List[int]:
         right_segment = series[i:]
         
         if len(left_segment) >= 2 and len(right_segment) >= 2:
-            left_var = statistics.variance(left_segment)
-            right_var = statistics.variance(right_segment)
+            left_var = variance(left_segment)
+            right_var = variance(right_segment)
             
             # Simple variance ratio test
             var_ratio = max(left_var, right_var) / (min(left_var, right_var) + 1e-10)
@@ -452,7 +452,7 @@ def _mean_changepoints(series: TimeSeries, min_length: int) -> List[int]:
     n = len(series)
     changepoints = []
     
-    overall_std = statistics.stdev(series) if len(series) > 1 else 1.0
+    overall_std = stdev(series) if len(series) > 1 else 1.0
     
     for i in range(min_length, n - min_length):
         left_mean = sum(series[:i]) / i
@@ -499,7 +499,7 @@ def _theil_sen_slope(series: TimeSeries) -> float:
                 slope = (series[j] - series[i]) / (j - i)
                 slopes.append(slope)
     
-    return statistics.median(slopes) if slopes else 0.0
+    return median(slopes) if slopes else 0.0
 
 
 def _percentile_slope(series: TimeSeries, percentile: float = 90.0) -> float:

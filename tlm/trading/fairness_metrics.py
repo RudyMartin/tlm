@@ -8,8 +8,7 @@ Essential for ethical AI and regulatory compliance in finance.
 
 from typing import List, Dict, Tuple, Optional, NamedTuple, Union
 import math
-import statistics
-from ..pure.ops import sum as asum
+from ..pure.ops import sum as asum, mean, median, std as stdev, var as variance
 
 # Type definitions
 Predictions = List[float]
@@ -219,7 +218,7 @@ def calculate_gini_metrics(outcomes: List[float],
     prediction_gini = 0.0
     if predictions:
         # Create dummy labels if not provided
-        dummy_labels = [1 if p > statistics.median(predictions) else 0 for p in predictions]
+        dummy_labels = [1 if p > median(predictions) else 0 for p in predictions]
         prediction_gini = prediction_gini_coefficient(predictions, dummy_labels)
     
     demographic_ginis = {}
@@ -729,7 +728,7 @@ def intersectional_bias_analysis(outcomes: List[float],
     for group, group_outcomes in intersectional_groups.items():
         group_results = {
             'mean_outcome': asum(group_outcomes) / len(group_outcomes),
-            'outcome_std': statistics.stdev(group_outcomes) if len(group_outcomes) > 1 else 0.0,
+            'outcome_std': stdev(group_outcomes) if len(group_outcomes) > 1 else 0.0,
             'sample_size': len(group_outcomes)
         }
         results[group] = group_results
@@ -739,7 +738,7 @@ def intersectional_bias_analysis(outcomes: List[float],
     results['_overall'] = {
         'intersectional_gini': wealth_gini_coefficient(group_means),
         'mean_range': max(group_means) - min(group_means) if group_means else 0.0,
-        'coefficient_of_variation': statistics.stdev(group_means) / statistics.mean(group_means) if group_means and statistics.mean(group_means) != 0 else 0.0
+        'coefficient_of_variation': stdev(group_means) / mean(group_means) if group_means and mean(group_means) != 0 else 0.0
     }
     
     return results

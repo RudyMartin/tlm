@@ -7,7 +7,7 @@ and decomposing multiple seasonal components in time series data.
 
 from typing import List, Tuple, Optional, Dict, Union, NamedTuple
 import math
-import statistics
+from ..pure.ops import mean, median, std as stdev, var as variance
 
 # Type definitions
 TimeSeries = List[float]
@@ -159,12 +159,12 @@ def seasonal_decomposition_strength(series: TimeSeries, period: int,
         return 0.0
     
     # Calculate strength as proportion of variance explained
-    series_var = statistics.variance(series) if len(series) > 1 else 0.0
+    series_var = variance(series) if len(series) > 1 else 0.0
     
     if series_var == 0:
         return 0.0
     
-    seasonal_var = statistics.variance(seasonal) if len(seasonal) > 1 else 0.0
+    seasonal_var = variance(seasonal) if len(seasonal) > 1 else 0.0
     strength = seasonal_var / series_var
     
     return min(1.0, strength)
@@ -446,15 +446,15 @@ def _seasonal_f_test(series: TimeSeries, period: int) -> Dict[str, float]:
         return {'strength': 0.0, 'statistic': 0.0, 'p_value': 1.0}
     
     # Calculate F-statistic
-    group_means = [statistics.mean(group) for group in seasonal_groups]
-    overall_mean = statistics.mean(series)
+    group_means = [mean(group) for group in seasonal_groups]
+    overall_mean = mean(series)
     
     # Between-group sum of squares
     ss_between = sum(len(group) * (mean - overall_mean)**2 
                     for group, mean in zip(seasonal_groups, group_means))
     
     # Within-group sum of squares  
-    ss_within = sum(sum((val - statistics.mean(group))**2 for val in group)
+    ss_within = sum(sum((val - mean(group))**2 for val in group)
                    for group in seasonal_groups)
     
     df_between = len(seasonal_groups) - 1

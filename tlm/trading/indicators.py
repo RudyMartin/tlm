@@ -7,7 +7,7 @@ momentum indicators, volatility measures, and volume analysis tools.
 
 from typing import List, Tuple, Dict, Optional, NamedTuple
 import math
-import statistics
+from ..pure.ops import mean, median, std as stdev, var as variance
 
 # Type definitions
 PriceData = List[float]
@@ -393,7 +393,7 @@ def bollinger_bands(prices: PriceData, period: int = 20,
         if sma[i] is not None:
             # Calculate standard deviation for the period
             period_data = prices[i - period + 1:i + 1]
-            std = statistics.stdev(period_data) if len(period_data) > 1 else 0
+            std = stdev(period_data) if len(period_data) > 1 else 0
             
             upper = sma[i] + (std_dev * std)
             lower = sma[i] - (std_dev * std)
@@ -585,7 +585,7 @@ def z_score(prices: PriceData, period: int = 20) -> IndicatorResult:
         mean_price = sum(period_prices) / period
         
         if len(period_prices) > 1:
-            std_price = statistics.stdev(period_prices)
+            std_price = stdev(period_prices)
         else:
             std_price = 0
         

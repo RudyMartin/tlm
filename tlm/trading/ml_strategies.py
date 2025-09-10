@@ -7,8 +7,7 @@ Bayesian Networks, reinforcement learning, and ensemble methods.
 
 from typing import List, Dict, Tuple, Optional, NamedTuple, Union
 import math
-import statistics
-from ..pure.ops import sum as asum
+from ..pure.ops import sum as asum, mean, median, std as stdev, var as variance
 
 # Type definitions
 PriceData = List[float]
@@ -144,7 +143,7 @@ def woe_trading_strategy(prices: PriceData, volumes: List[float],
         if len(price_window) > 1:
             returns = [(price_window[j] - price_window[j-1]) / price_window[j-1] 
                       for j in range(1, len(price_window))]
-            volatility = statistics.stdev(returns) if len(returns) > 1 else 0
+            volatility = stdev(returns) if len(returns) > 1 else 0
         else:
             volatility = 0
         features.append(volatility)
