@@ -476,6 +476,9 @@ def reinforcement_learning_trader(prices: PriceData, volumes: List[float],
             losses = [max(0, prices[j-1] - prices[j]) for j in range(i-13, i)]
             avg_gain = asum(gains) / len(gains) if gains else 0
             avg_loss = asum(losses) / len(losses) if losses else 0.01
+            # Ensure avg_loss is never zero to prevent division by zero
+            if avg_loss == 0:
+                avg_loss = 0.01
             rsi = 100 - (100 / (1 + avg_gain / avg_loss))
             
             features = [momentum, volume_ratio, rsi]
@@ -521,6 +524,9 @@ def reinforcement_learning_trader(prices: PriceData, volumes: List[float],
         losses = [max(0, prices[j-1] - prices[j]) for j in range(i-13, i)]
         avg_gain = asum(gains) / len(gains) if gains else 0
         avg_loss = asum(losses) / len(losses) if losses else 0.01
+        # Ensure avg_loss is never zero to prevent division by zero
+        if avg_loss == 0:
+            avg_loss = 0.01
         rsi = 100 - (100 / (1 + avg_gain / avg_loss))
         
         features = [momentum, volume_ratio, rsi]
