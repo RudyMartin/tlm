@@ -116,7 +116,7 @@ def clip(x, lo, hi):
 # Reductions
 # -----------------------
 
-def sum(x, axis: int | None = None) -> Union[Scalar, Vector]:
+def asum(x, axis: int | None = None) -> Union[Scalar, Vector]:
     """Compute sum along axis or all elements."""
     if axis is None:
         if _is_vec(x):
@@ -143,17 +143,17 @@ def mean(x, axis: int | None = None):
     """Compute mean along axis or all elements."""
     if axis is None:
         if _is_vec(x):
-            return sum(x) / len(x)
+            return asum(x) / len(x)
         elif _is_mat(x):
             n, m = shape(x)
-            return sum(x) / (n * m)
+            return asum(x) / (n * m)
         else:
             return float(x)
     if axis == 0:
         n, m = shape(x)
-        return [sum([x[i][j] for i in range(n)]) / n for j in range(m)]
+        return [asum([x[i][j] for i in range(n)]) / n for j in range(m)]
     if axis == 1:
-        return [sum(row) / len(row) for row in x]
+        return [asum(row) / len(row) for row in x]
     raise ValueError("axis out of range")
 
 def var(x, axis: int | None = None, ddof: int = 0):
@@ -161,18 +161,18 @@ def var(x, axis: int | None = None, ddof: int = 0):
     if axis is None:
         mu = mean(x)
         if _is_vec(x):
-            return sum([(a - mu) ** 2 for a in x]) / (len(x) - ddof)
+            return asum([(a - mu) ** 2 for a in x]) / (len(x) - ddof)
         elif _is_mat(x):
             n, m = shape(x)
-            return sum([(a - mu) ** 2 for row in x for a in row]) / (n * m - ddof)
+            return asum([(a - mu) ** 2 for row in x for a in row]) / (n * m - ddof)
     else:
         if axis == 0:
             mu = mean(x, axis=0)
             n, m = shape(x)
-            return [sum([(x[i][j] - mu[j]) ** 2 for i in range(n)]) / (n - ddof) for j in range(m)]
+            return [asum([(x[i][j] - mu[j]) ** 2 for i in range(n)]) / (n - ddof) for j in range(m)]
         if axis == 1:
             mus = mean(x, axis=1)
-            return [sum([(a - mus[i]) ** 2 for a in row]) / (len(row) - ddof) for i, row in enumerate(x)]
+            return [asum([(a - mus[i]) ** 2 for a in row]) / (len(row) - ddof) for i, row in enumerate(x)]
     raise ValueError("axis out of range")
 
 def std(x, axis: int | None = None, ddof: int = 0):

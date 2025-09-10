@@ -7,7 +7,7 @@ from .pure.ops import (
     array, shape, zeros, ones, eye,
     transpose, dot, matmul,
     add, sub, mul, div,
-    sum as asum, mean, var, std, max as amax, min as amin, argmax,
+    asum, mean, var, std, max as amax, min as amin, argmax,
     exp, log, sqrt, clip, norm, l2_normalize,
     flatten, reshape, concatenate,
     # Random functions (removed - not in GitHub version)

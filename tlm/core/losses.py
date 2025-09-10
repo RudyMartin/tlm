@@ -1,6 +1,6 @@
 import math
 from typing import List, Optional, Union
-from ..pure.ops import sum as asum
+from ..pure.ops import asum
 import builtins
 
 # Type definitions for consistency

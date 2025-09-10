@@ -7,7 +7,7 @@ Bayesian Networks, reinforcement learning, and ensemble methods.
 
 from typing import List, Dict, Tuple, Optional, NamedTuple, Union
 import math
-from ..pure.ops import sum as asum, mean, median, std as stdev, var as variance
+from ..pure.ops import asum, mean, median, std as stdev, var as variance
 
 # Type definitions
 PriceData = List[float]
