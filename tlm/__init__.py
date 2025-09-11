@@ -1,6 +1,6 @@
 # tlm/__init__.py — NumPy-free API (pure Python, stdlib only)
 
-__version__ = "1.2.0"  # Bumped for merged features
+__version__ = "1.2.0"
 
 # Core list-based ops
 from .pure.ops import (
