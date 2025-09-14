@@ -1,6 +1,6 @@
 [project]
 name = "tlm"
-version = "0.2.0"
+version = "1.2.0"
 description = "Teaching library: NumPy-like API on pure Python lists + Data Science algos (NumPy-free)"
 readme = "README.md"
 requires-python = ">=3.9"
