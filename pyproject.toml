@@ -1,0 +1,33 @@
+[project]
+name = "tlm"
+version = "1.2.0"
+description = "Teaching library: NumPy-like API on pure Python lists + Data Science algos (NumPy-free)"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+authors = [
+    {name = "Rudy Martin", email = "rudy@nextshiftconsulting.com"}
+]
+license = {text = "CC BY 4.0"}
+keywords = ["data science", "machine learning", "teaching", "numpy-free", "pure python"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/rudymartin/tlm"
+"Bug Reports" = "https://github.com/rudymartin/tlm/issues"
+"Source" = "https://github.com/rudymartin/tlm"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
