@@ -127,3 +127,51 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Modern Python tools
+.ruff_cache/
+.benchmarks/
+
+# Security/Secrets
+*.pem
+*.key
+.env.*
+secrets/
+*.pfx
+*.p12
+
+# Docker/Kubernetes
+*.pvc
+docker-compose.override.yml
+.dockerignore
+
+# Temporary files
+*.tmp
+*.bak
+temp/
+tmp/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Extended logs
+logs/
+*.log.*
+
+# Node/Frontend (if mixed project)
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
