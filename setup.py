@@ -32,7 +32,7 @@ setup(
     description="Teaching library: NumPy-like API on pure Python lists + Data Science algos (NumPy-free)",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
-    url="https://github.com/rudymartin/tlm",
+    url="https://github.com/organization/tlm",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
