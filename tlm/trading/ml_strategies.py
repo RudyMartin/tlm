@@ -7,7 +7,8 @@ Bayesian Networks, reinforcement learning, and ensemble methods.
 
 from typing import List, Dict, Tuple, Optional, NamedTuple, Union
 import math
-from ..pure.ops import asum, mean, median, std as stdev, var as variance
+import statistics
+from ..pure.ops import sum as asum
 
 # Type definitions
 PriceData = List[float]
@@ -143,7 +144,7 @@ def woe_trading_strategy(prices: PriceData, volumes: List[float],
         if len(price_window) > 1:
             returns = [(price_window[j] - price_window[j-1]) / price_window[j-1] 
                       for j in range(1, len(price_window))]
-            volatility = stdev(returns) if len(returns) > 1 else 0
+            volatility = statistics.stdev(returns) if len(returns) > 1 else 0
         else:
             volatility = 0
         features.append(volatility)
@@ -476,9 +477,6 @@ def reinforcement_learning_trader(prices: PriceData, volumes: List[float],
             losses = [max(0, prices[j-1] - prices[j]) for j in range(i-13, i)]
             avg_gain = asum(gains) / len(gains) if gains else 0
             avg_loss = asum(losses) / len(losses) if losses else 0.01
-            # Ensure avg_loss is never zero to prevent division by zero
-            if avg_loss == 0:
-                avg_loss = 0.01
             rsi = 100 - (100 / (1 + avg_gain / avg_loss))
             
             features = [momentum, volume_ratio, rsi]
@@ -524,9 +522,6 @@ def reinforcement_learning_trader(prices: PriceData, volumes: List[float],
         losses = [max(0, prices[j-1] - prices[j]) for j in range(i-13, i)]
         avg_gain = asum(gains) / len(gains) if gains else 0
         avg_loss = asum(losses) / len(losses) if losses else 0.01
-        # Ensure avg_loss is never zero to prevent division by zero
-        if avg_loss == 0:
-            avg_loss = 0.01
         rsi = 100 - (100 / (1 + avg_gain / avg_loss))
         
         features = [momentum, volume_ratio, rsi]

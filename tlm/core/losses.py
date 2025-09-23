@@ -1,6 +1,7 @@
 import math
 from typing import List, Optional, Union
-from ..pure.ops import asum
+from ..pure.ops import sum as asum
+import builtins
 
 # Type definitions for consistency
 Scalar = float
@@ -56,11 +57,11 @@ def cross_entropy(logits: Matrix, y_idx: List[int]) -> float:
     total = 0.0
     for i in range(n):
         row = logits[i]
-        m = max(row)
+        m = builtins.max(row)
         ex = [math.exp(z - m) for z in row]
-        s = sum(ex)
+        s = builtins.sum(ex)
         pi = ex[y_idx[i]] / s
-        total += -math.log(max(pi, 1e-12))
+        total += -math.log(builtins.max(pi, 1e-12))
     return total / n
 
 
@@ -76,8 +77,8 @@ def msle(y_true: List[float], y_pred: List[float]) -> float:
     n = len(y_true)
     total = 0.0
     for i in range(n):
-        y_t = max(0.0, y_true[i])  # Ensure non-negative
-        y_p = max(0.0, y_pred[i])
+        y_t = builtins.max(0.0, y_true[i])  # Ensure non-negative
+        y_p = builtins.max(0.0, y_pred[i])
         total += (math.log(1 + y_t) - math.log(1 + y_p)) ** 2
     return total / n
 
@@ -87,9 +88,9 @@ def mape(y_true: List[float], y_pred: List[float], epsilon: float = 1e-8) -> flo
     n = len(y_true)
     total = 0.0
     for i in range(n):
-        if abs(y_true[i]) < epsilon:
+        if builtins.abs(y_true[i]) < epsilon:
             continue  # Skip near-zero values
-        total += abs((y_true[i] - y_pred[i]) / y_true[i])
+        total += builtins.abs((y_true[i] - y_pred[i]) / y_true[i])
     return total / n * 100.0
 
 
@@ -98,10 +99,10 @@ def smape(y_true: List[float], y_pred: List[float], epsilon: float = 1e-8) -> fl
     n = len(y_true)
     total = 0.0
     for i in range(n):
-        denominator = (abs(y_true[i]) + abs(y_pred[i])) / 2.0
+        denominator = (builtins.abs(y_true[i]) + builtins.abs(y_pred[i])) / 2.0
         if denominator < epsilon:
             continue  # Skip near-zero values
-        total += abs(y_true[i] - y_pred[i]) / denominator
+        total += builtins.abs(y_true[i] - y_pred[i]) / denominator
     return total / n * 100.0
 
 
@@ -110,7 +111,7 @@ def huber_loss(y_true: List[float], y_pred: List[float], delta: float = 1.0) -> 
     n = len(y_true)
     total = 0.0
     for i in range(n):
-        error = abs(y_true[i] - y_pred[i])
+        error = builtins.abs(y_true[i] - y_pred[i])
         if error <= delta:
             total += 0.5 * error ** 2
         else:
@@ -125,8 +126,8 @@ def log_cosh_loss(y_true: List[float], y_pred: List[float]) -> float:
     for i in range(n):
         error = y_pred[i] - y_true[i]
         # Use log(cosh(x)) ≈ |x| - log(2) for large |x| to avoid overflow
-        if abs(error) > 10:
-            total += abs(error) - math.log(2.0)
+        if builtins.abs(error) > 10:
+            total += builtins.abs(error) - math.log(2.0)
         else:
             total += math.log(math.cosh(error))
     return total / n
@@ -152,11 +153,11 @@ def quantile_loss(y_true: List[float], y_pred: List[float], quantile: float = 0.
 
 def sparse_cross_entropy(logits: List[float], y_true: int) -> float:
     """Calculate sparse categorical cross entropy for single sample."""
-    m = max(logits)
+    m = builtins.max(logits)
     ex = [math.exp(z - m) for z in logits]
-    s = sum(ex)
+    s = builtins.sum(ex)
     pi = ex[y_true] / s
-    return -math.log(max(pi, 1e-12))
+    return -math.log(builtins.max(pi, 1e-12))
 
 
 def focal_loss(y_true: List[int], y_pred: List[float], alpha: float = 1.0, 
@@ -167,7 +168,7 @@ def focal_loss(y_true: List[int], y_pred: List[float], alpha: float = 1.0,
     total = 0.0
     
     for i in range(n):
-        p = min(max(y_pred[i], eps), 1.0 - eps)
+        p = builtins.min(builtins.max(y_pred[i], eps), 1.0 - eps)
         y = y_true[i]
         
         if y == 1:
@@ -187,7 +188,7 @@ def hinge_loss(y_true: List[int], y_pred: List[float]) -> float:
     for i in range(n):
         # Convert labels to {-1, 1}
         y = 2 * y_true[i] - 1 if y_true[i] in [0, 1] else y_true[i]
-        total += max(0, 1 - y * y_pred[i])
+        total += builtins.max(0, 1 - y * y_pred[i])
     return total / n
 
 
@@ -197,7 +198,7 @@ def squared_hinge_loss(y_true: List[int], y_pred: List[float]) -> float:
     total = 0.0
     for i in range(n):
         y = 2 * y_true[i] - 1 if y_true[i] in [0, 1] else y_true[i]
-        hinge = max(0, 1 - y * y_pred[i])
+        hinge = builtins.max(0, 1 - y * y_pred[i])
         total += hinge ** 2
     return total / n
 
@@ -209,8 +210,8 @@ def kl_divergence(p: List[float], q: List[float]) -> float:
     eps = 1e-12
     total = 0.0
     for i in range(len(p)):
-        pi = max(p[i], eps)
-        qi = max(q[i], eps)
+        pi = builtins.max(p[i], eps)
+        qi = builtins.max(q[i], eps)
         total += pi * math.log(pi / qi)
     return total
 
@@ -229,8 +230,8 @@ def wasserstein_distance(p: List[float], q: List[float]) -> float:
         raise ValueError("Distributions must have same length")
     
     # Normalize to ensure they are probability distributions
-    p_sum = sum(p)
-    q_sum = sum(q)
+    p_sum = builtins.sum(p)
+    q_sum = builtins.sum(q)
     
     if p_sum == 0 or q_sum == 0:
         return 0.0
@@ -246,7 +247,7 @@ def wasserstein_distance(p: List[float], q: List[float]) -> float:
     for i in range(len(p)):
         p_cum += p_norm[i]
         q_cum += q_norm[i]
-        total += abs(p_cum - q_cum)
+        total += builtins.abs(p_cum - q_cum)
     
     return total
 
@@ -263,7 +264,7 @@ def contrastive_loss(y_true: List[int], distances: List[float], margin: float = 
         if y_true[i] == 1:  # Similar pair
             total += d ** 2
         else:  # Dissimilar pair
-            total += max(0, margin - d) ** 2
+            total += builtins.max(0, margin - d) ** 2
     
     return total / (2.0 * n)
 
@@ -276,9 +277,9 @@ def triplet_loss(anchor_pred: List[float], positive_pred: List[float],
     
     for i in range(n):
         # Calculate distances (simplified as absolute difference)
-        pos_dist = abs(anchor_pred[i] - positive_pred[i])
-        neg_dist = abs(anchor_pred[i] - negative_pred[i])
-        total += max(0, pos_dist - neg_dist + margin)
+        pos_dist = builtins.abs(anchor_pred[i] - positive_pred[i])
+        neg_dist = builtins.abs(anchor_pred[i] - negative_pred[i])
+        total += builtins.max(0, pos_dist - neg_dist + margin)
     
     return total / n
 
@@ -291,7 +292,7 @@ def margin_ranking_loss(input1: List[float], input2: List[float],
     
     for i in range(n):
         y = target[i]  # Should be 1 or -1
-        total += max(0, -y * (input1[i] - input2[i]) + margin)
+        total += builtins.max(0, -y * (input1[i] - input2[i]) + margin)
     
     return total / n
 
@@ -304,7 +305,7 @@ def robust_l1_loss(y_true: List[float], y_pred: List[float], threshold: float = 
     total = 0.0
     
     for i in range(n):
-        error = abs(y_true[i] - y_pred[i])
+        error = builtins.abs(y_true[i] - y_pred[i])
         if error <= threshold:
             total += error
         else:
@@ -319,7 +320,7 @@ def robust_l2_loss(y_true: List[float], y_pred: List[float], threshold: float = 
     total = 0.0
     
     for i in range(n):
-        error = abs(y_true[i] - y_pred[i])
+        error = builtins.abs(y_true[i] - y_pred[i])
         if error <= threshold:
             total += error ** 2
         else:
@@ -334,7 +335,7 @@ def tukey_loss(y_true: List[float], y_pred: List[float], c: float = 4.685) -> fl
     total = 0.0
     
     for i in range(n):
-        error = abs(y_true[i] - y_pred[i])
+        error = builtins.abs(y_true[i] - y_pred[i])
         if error <= c:
             u = error / c
             total += (c ** 2 / 6.0) * (1 - (1 - u ** 2) ** 3)
@@ -376,7 +377,7 @@ def weighted_loss(y_true: List[float], y_pred: List[float],
         loss = loss_fn([y_true[i]], [y_pred[i]])
         individual_losses.append(loss * sample_weights[i])
     
-    return sum(individual_losses) / sum(sample_weights)
+    return builtins.sum(individual_losses) / builtins.sum(sample_weights)
 
 
 # F2 LOSS AND STATISTICAL TEST LOSSES
@@ -446,7 +447,7 @@ def durbin_watson_loss(residuals: List[float]) -> float:
     dw_statistic = numerator / denominator
     
     # Convert to loss: distance from ideal value of 2.0
-    return abs(dw_statistic - 2.0)
+    return builtins.abs(dw_statistic - 2.0)
 
 
 # DISTRIBUTION-BASED LOSSES
@@ -470,7 +471,7 @@ def bernoulli_loss(y_true: List[int], y_pred: List[float]) -> float:
     total = 0.0
     
     for i in range(n):
-        p = min(max(y_pred[i], eps), 1.0 - eps)
+        p = builtins.min(builtins.max(y_pred[i], eps), 1.0 - eps)
         y = y_true[i]
         
         # Bernoulli log-likelihood: y*log(p) + (1-y)*log(1-p)
@@ -498,8 +499,8 @@ def poisson_loss(y_true: List[float], y_pred: List[float]) -> float:
     total = 0.0
     
     for i in range(n):
-        y = max(0.0, y_true[i])  # Ensure non-negative
-        rate = max(eps, y_pred[i])  # Ensure positive rate
+        y = builtins.max(0.0, y_true[i])  # Ensure non-negative
+        rate = builtins.max(eps, y_pred[i])  # Ensure positive rate
         
         # Poisson log-likelihood: y*log(rate) - rate - log(y!)
         # We omit log(y!) as it doesn't depend on predictions
@@ -528,8 +529,8 @@ def gamma_loss(y_true: List[float], y_pred: List[float], alpha: float = 1.0) -> 
     total = 0.0
     
     for i in range(n):
-        y = max(eps, y_true[i])  # Ensure positive
-        scale = max(eps, y_pred[i])  # Ensure positive
+        y = builtins.max(eps, y_true[i])  # Ensure positive
+        scale = builtins.max(eps, y_pred[i])  # Ensure positive
         
         # Gamma log-likelihood (simplified, omitting constant terms)
         # -log(Gamma(α)) - α*log(β) + (α-1)*log(y) - y/β
@@ -561,7 +562,7 @@ def lucas_loss(y_true: List[float], y_pred: List[float], p: float = 2.0) -> floa
     total = 0.0
     
     for i in range(n):
-        error = abs(y_true[i] - y_pred[i])
+        error = builtins.abs(y_true[i] - y_pred[i])
         if p == 1.0:
             total += error
         elif p == 2.0:

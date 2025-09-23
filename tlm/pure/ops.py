@@ -1,5 +1,5 @@
 from __future__ import annotations
-import math, random
+import math, random, builtins
 from typing import List, Sequence, Tuple, Callable, Union
 
 Scalar = Union[int, float]
@@ -116,7 +116,7 @@ def clip(x, lo, hi):
 # Reductions
 # -----------------------
 
-def asum(x, axis: int | None = None) -> Union[Scalar, Vector]:
+def sum(x, axis: int | None = None) -> Union[Scalar, Vector]:
     """Compute sum along axis or all elements."""
     if axis is None:
         if _is_vec(x):
@@ -143,17 +143,17 @@ def mean(x, axis: int | None = None):
     """Compute mean along axis or all elements."""
     if axis is None:
         if _is_vec(x):
-            return asum(x) / len(x)
+            return sum(x) / len(x)
         elif _is_mat(x):
             n, m = shape(x)
-            return asum(x) / (n * m)
+            return sum(x) / (n * m)
         else:
             return float(x)
     if axis == 0:
         n, m = shape(x)
-        return [asum([x[i][j] for i in range(n)]) / n for j in range(m)]
+        return [sum([x[i][j] for i in range(n)]) / n for j in range(m)]
     if axis == 1:
-        return [asum(row) / len(row) for row in x]
+        return [sum(row) / len(row) for row in x]
     raise ValueError("axis out of range")
 
 def var(x, axis: int | None = None, ddof: int = 0):
@@ -161,18 +161,18 @@ def var(x, axis: int | None = None, ddof: int = 0):
     if axis is None:
         mu = mean(x)
         if _is_vec(x):
-            return asum([(a - mu) ** 2 for a in x]) / (len(x) - ddof)
+            return sum([(a - mu) ** 2 for a in x]) / (len(x) - ddof)
         elif _is_mat(x):
             n, m = shape(x)
-            return asum([(a - mu) ** 2 for row in x for a in row]) / (n * m - ddof)
+            return sum([(a - mu) ** 2 for row in x for a in row]) / (n * m - ddof)
     else:
         if axis == 0:
             mu = mean(x, axis=0)
             n, m = shape(x)
-            return [asum([(x[i][j] - mu[j]) ** 2 for i in range(n)]) / (n - ddof) for j in range(m)]
+            return [sum([(x[i][j] - mu[j]) ** 2 for i in range(n)]) / (n - ddof) for j in range(m)]
         if axis == 1:
             mus = mean(x, axis=1)
-            return [asum([(a - mus[i]) ** 2 for a in row]) / (len(row) - ddof) for i, row in enumerate(x)]
+            return [sum([(a - mus[i]) ** 2 for a in row]) / (len(row) - ddof) for i, row in enumerate(x)]
     raise ValueError("axis out of range")
 
 def std(x, axis: int | None = None, ddof: int = 0):
@@ -184,34 +184,34 @@ def std(x, axis: int | None = None, ddof: int = 0):
         return [math.sqrt(a) for a in v]
     return math.sqrt(v)
 
-def amax(x, axis: int | None = None):
+def max(x, axis: int | None = None):
     """Compute maximum along axis or all elements."""
     if axis is None:
         if _is_vec(x):
-            return float(max(x))
+            return float(builtins.max(x))
         elif _is_mat(x):
-            return float(max([max(row) for row in x]))
+            return float(builtins.max([builtins.max(row) for row in x]))
         return float(x)
     if axis == 0:
         n, m = shape(x)
-        return [float(max([x[i][j] for i in range(n)])) for j in range(m)]
+        return [float(builtins.max([x[i][j] for i in range(n)])) for j in range(m)]
     if axis == 1:
-        return [float(max(row)) for row in x]
+        return [float(builtins.max(row)) for row in x]
     raise ValueError("axis out of range")
 
-def amin(x, axis: int | None = None):
+def min(x, axis: int | None = None):
     """Compute minimum along axis or all elements."""
     if axis is None:
         if _is_vec(x):
-            return float(min(x))
+            return float(builtins.min(x))
         elif _is_mat(x):
-            return float(min([min(row) for row in x]))
+            return float(builtins.min([builtins.min(row) for row in x]))
         return float(x)
     if axis == 0:
         n, m = shape(x)
-        return [float(min([x[i][j] for i in range(n)])) for j in range(m)]
+        return [float(builtins.min([x[i][j] for i in range(n)])) for j in range(m)]
     if axis == 1:
-        return [float(min(row)) for row in x]
+        return [float(builtins.min(row)) for row in x]
     raise ValueError("axis out of range")
 
 def argmax(x, axis: int = -1):
@@ -263,11 +263,11 @@ def norm(v: Vector, ord: int = 2) -> float:
 def l2_normalize(X, axis: int = -1, eps: float = 1e-12):
     """Apply L2 normalization along axis."""
     if _is_vec(X):
-        nrm = max(norm(X), eps)
+        nrm = builtins.max(norm(X), eps)
         return [x / nrm for x in X]
     out = []
     for row in X:
-        nrm = max(norm(row), eps)
+        nrm = builtins.max(norm(row), eps)
         out.append([x / nrm for x in row])
     return out
 
@@ -375,9 +375,9 @@ def cosine_similarity(a: Vector, b: Vector) -> float:
     """Compute cosine similarity between two vectors."""
     assert len(a) == len(b), "Vectors must have same length"
     
-    dot_product = sum(x * y for x, y in zip(a, b))
-    norm_a = math.sqrt(sum(x * x for x in a))
-    norm_b = math.sqrt(sum(y * y for y in b))
+    dot_product = builtins.sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(builtins.sum(x * x for x in a))
+    norm_b = math.sqrt(builtins.sum(y * y for y in b))
     
     if norm_a == 0 or norm_b == 0:
         return 0.0
@@ -387,18 +387,17 @@ def cosine_similarity(a: Vector, b: Vector) -> float:
 def euclidean_distance(a: Vector, b: Vector) -> float:
     """Compute Euclidean distance between two vectors."""
     assert len(a) == len(b), "Vectors must have same length"
-    return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
+    return math.sqrt(builtins.sum((x - y) ** 2 for x, y in zip(a, b)))
 
 def manhattan_distance(a: Vector, b: Vector) -> float:
     """Compute Manhattan (L1) distance between two vectors."""
     assert len(a) == len(b), "Vectors must have same length"
-    import builtins
-    return sum(builtins.abs(x - y) for x, y in zip(a, b))
+    return builtins.sum(builtins.abs(x - y) for x, y in zip(a, b))
 
 def hamming_distance(a: Vector, b: Vector) -> int:
     """Compute Hamming distance between two vectors."""
     assert len(a) == len(b), "Vectors must have same length"
-    return sum(1 for x, y in zip(a, b) if x != y)
+    return builtins.sum(1 for x, y in zip(a, b) if x != y)
 
 # -----------------------
 # Additional Math Operations
@@ -409,8 +408,7 @@ def power(x, p):
     return _apply1(x, lambda z: z ** p)
 
 def abs(x):
-    """Compute absolute value elementwise.""" 
-    import builtins
+    """Compute absolute value elementwise."""
     return _apply1(x, lambda z: builtins.abs(z))
 
 def sign(x):
@@ -534,12 +532,12 @@ def correlation(x: Vector, y: Vector) -> float:
     if n == 0:
         return 0.0
     
-    mean_x = sum(x) / n
-    mean_y = sum(y) / n
+    mean_x = builtins.sum(x) / n
+    mean_y = builtins.sum(y) / n
     
-    cov = sum((x[i] - mean_x) * (y[i] - mean_y) for i in range(n))
-    std_x = math.sqrt(sum((x[i] - mean_x) ** 2 for i in range(n)))
-    std_y = math.sqrt(sum((y[i] - mean_y) ** 2 for i in range(n)))
+    cov = builtins.sum((x[i] - mean_x) * (y[i] - mean_y) for i in range(n))
+    std_x = math.sqrt(builtins.sum((x[i] - mean_x) ** 2 for i in range(n)))
+    std_y = math.sqrt(builtins.sum((y[i] - mean_y) ** 2 for i in range(n)))
     
     if std_x == 0 or std_y == 0:
         return 0.0
@@ -558,7 +556,7 @@ def covariance_matrix(X: Matrix) -> Matrix:
     cov = zeros((m, m))
     for i in range(m):
         for j in range(m):
-            cov[i][j] = sum(X_centered[k][i] * X_centered[k][j] for k in range(n)) / (n - 1)
+            cov[i][j] = builtins.sum(X_centered[k][i] * X_centered[k][j] for k in range(n)) / (n - 1)
     
     return cov
 

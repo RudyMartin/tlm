@@ -7,7 +7,7 @@ mean reversion, momentum, statistical arbitrage, and machine learning strategies
 
 from typing import List, Dict, Tuple, Optional, NamedTuple, Union
 import math
-from ..pure.ops import mean, median, std as stdev, var as variance
+import statistics
 from .indicators import (
     simple_moving_average, exponential_moving_average, rsi, bollinger_bands,
     macd, z_score, stochastic_oscillator, average_true_range
@@ -455,7 +455,7 @@ def statistical_arbitrage(prices: List[PriceData], lookback: int = 30) -> Strate
                 
                 if len(rel_perfs) > 1:
                     mean_rel = sum(rel_perfs) / len(rel_perfs)
-                    std_rel = stdev(rel_perfs)
+                    std_rel = statistics.stdev(rel_perfs)
                     
                     if std_rel > 0:
                         z_score_val = (relative_perf - mean_rel) / std_rel
@@ -504,7 +504,7 @@ def ornstein_uhlenbeck_reversion(prices: PriceData, lookback: int = 60) -> Strat
         diffs = [log_prices[j] - log_prices[j-1] for j in range(1, len(log_prices))]
         levels = [log_prices[j-1] - mean_log_price for j in range(1, len(log_prices))]
         
-        if len(levels) > 1 and stdev(levels) > 0:
+        if len(levels) > 1 and statistics.stdev(levels) > 0:
             # Simple linear regression for mean reversion speed
             mean_level = sum(levels) / len(levels)
             mean_diff = sum(diffs) / len(diffs)
@@ -708,7 +708,7 @@ def _calculate_metrics(returns: List[float]) -> Dict[str, float]:
     mean_return = total_return / len(clean_returns)
     
     if len(clean_returns) > 1:
-        volatility = stdev(clean_returns)
+        volatility = statistics.stdev(clean_returns)
         sharpe_ratio = mean_return / volatility if volatility > 0 else 0.0
     else:
         volatility = 0.0

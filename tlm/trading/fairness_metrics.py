@@ -8,7 +8,8 @@ Essential for ethical AI and regulatory compliance in finance.
 
 from typing import List, Dict, Tuple, Optional, NamedTuple, Union
 import math
-from ..pure.ops import asum, mean, median, std as stdev, var as variance
+import statistics
+from ..pure.ops import sum as asum
 
 # Type definitions
 Predictions = List[float]
@@ -71,7 +72,7 @@ def wealth_gini_coefficient(wealth_distribution: List[float]) -> float:
     
     # Calculate Gini using the formula: G = (2∑(i*x_i))/(n*∑x_i) - (n+1)/n
     total_wealth = asum(sorted_wealth)
-    weighted_sum = asum([(i + 1) * sorted_wealth[i] for i in range(n)])
+    weighted_sum = asum((i + 1) * sorted_wealth[i] for i in range(n))
     
     gini = (2 * weighted_sum) / (n * total_wealth) - (n + 1) / n
     return max(0.0, min(1.0, gini))
@@ -94,7 +95,7 @@ def portfolio_gini_coefficient(portfolio_weights: List[float]) -> float:
         return 0.0
     
     # Normalize weights to sum to 1
-    total_weight = asum([abs(w) for w in portfolio_weights])
+    total_weight = asum(abs(w) for w in portfolio_weights)
     if total_weight == 0:
         return 0.0
     
@@ -218,7 +219,7 @@ def calculate_gini_metrics(outcomes: List[float],
     prediction_gini = 0.0
     if predictions:
         # Create dummy labels if not provided
-        dummy_labels = [1 if p > median(predictions) else 0 for p in predictions]
+        dummy_labels = [1 if p > statistics.median(predictions) else 0 for p in predictions]
         prediction_gini = prediction_gini_coefficient(predictions, dummy_labels)
     
     demographic_ginis = {}
@@ -510,7 +511,7 @@ def shannon_diversity_index(composition: List[float]) -> float:
     
     proportions = [x / total for x in composition if x > 0]
     
-    shannon = -asum([p * math.log(p) for p in proportions if p > 0])
+    shannon = -asum(p * math.log(p) for p in proportions if p > 0)
     return shannon
 
 
@@ -535,7 +536,7 @@ def simpson_diversity_index(composition: List[float]) -> float:
         return 0.0
     
     proportions = [x / total for x in composition]
-    simpson = 1 - asum([p**2 for p in proportions])
+    simpson = 1 - asum(p**2 for p in proportions)
     
     return max(0.0, simpson)
 
@@ -625,7 +626,7 @@ def effective_number_of_species(composition: List[float], q: float = 1.0) -> flo
         if q == 0:
             return len(proportions)  # Species richness
         else:
-            hill_number = (asum([p**q for p in proportions]))**(1/(1-q))
+            hill_number = (asum(p**q for p in proportions))**(1/(1-q))
             return hill_number
 
 
@@ -728,7 +729,7 @@ def intersectional_bias_analysis(outcomes: List[float],
     for group, group_outcomes in intersectional_groups.items():
         group_results = {
             'mean_outcome': asum(group_outcomes) / len(group_outcomes),
-            'outcome_std': stdev(group_outcomes) if len(group_outcomes) > 1 else 0.0,
+            'outcome_std': statistics.stdev(group_outcomes) if len(group_outcomes) > 1 else 0.0,
             'sample_size': len(group_outcomes)
         }
         results[group] = group_results
@@ -738,7 +739,7 @@ def intersectional_bias_analysis(outcomes: List[float],
     results['_overall'] = {
         'intersectional_gini': wealth_gini_coefficient(group_means),
         'mean_range': max(group_means) - min(group_means) if group_means else 0.0,
-        'coefficient_of_variation': stdev(group_means) / mean(group_means) if group_means and mean(group_means) != 0 else 0.0
+        'coefficient_of_variation': statistics.stdev(group_means) / statistics.mean(group_means) if group_means and statistics.mean(group_means) != 0 else 0.0
     }
     
     return results
@@ -754,9 +755,9 @@ def _pearson_correlation(x: List[float], y: List[float]) -> float:
     n = len(x)
     sum_x = asum(x)
     sum_y = asum(y)
-    sum_xy = asum([x[i] * y[i] for i in range(n)])
-    sum_x2 = asum([xi**2 for xi in x])
-    sum_y2 = asum([yi**2 for yi in y])
+    sum_xy = asum(x[i] * y[i] for i in range(n))
+    sum_x2 = asum(xi**2 for xi in x)
+    sum_y2 = asum(yi**2 for yi in y)
     
     numerator = n * sum_xy - sum_x * sum_y
     denominator = math.sqrt((n * sum_x2 - sum_x**2) * (n * sum_y2 - sum_y**2))

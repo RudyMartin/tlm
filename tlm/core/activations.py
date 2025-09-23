@@ -1,6 +1,6 @@
 import math
 from typing import List, Union
-from ..pure.ops import _apply1, amax, asum
+from ..pure.ops import _apply1, max as amax, sum as asum
 
 # Type definitions for consistency
 Scalar = float

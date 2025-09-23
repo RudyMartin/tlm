@@ -8,7 +8,7 @@ time series data before analysis.
 
 from typing import List, Tuple, Optional, Dict
 import math
-from ..pure.ops import mean, median, std as stdev, var as variance
+import statistics
 
 # Type definitions
 TimeSeries = List[float]
@@ -121,7 +121,7 @@ def estimate_noise_level(series: TimeSeries, method: str = 'robust') -> float:
     elif method == 'std':
         # Use differenced series to estimate noise
         diffs = [series[i+1] - series[i] for i in range(len(series) - 1)]
-        return stdev(diffs) / math.sqrt(2) if len(diffs) > 1 else 0.0
+        return statistics.stdev(diffs) / math.sqrt(2) if len(diffs) > 1 else 0.0
     elif method == 'iqr':
         return _iqr_noise_estimate(series)
     else:
@@ -264,7 +264,7 @@ def median_filter(series: TimeSeries, window: int = 3) -> TimeSeries:
         start = max(0, i - k)
         end = min(n, i + k + 1)
         window_data = series[start:end]
-        result.append(median(window_data))
+        result.append(statistics.median(window_data))
     
     return result
 
@@ -293,8 +293,8 @@ def outlier_detection_seasonal(series: TimeSeries, period: int,
         residuals = series
     
     # Calculate robust statistics
-    median_res = median(residuals)
-    mad = median([abs(r - median_res) for r in residuals])
+    median_res = statistics.median(residuals)
+    mad = statistics.median([abs(r - median_res) for r in residuals])
     
     # Modified z-score using MAD
     mad_scaled = mad * 1.4826  # Scale factor for normal distribution
@@ -356,8 +356,8 @@ def outlier_detection_spectral(series: TimeSeries, threshold: float = 2.0) -> Li
     
     # Detect outliers in residuals
     if len(residuals) > 0:
-        std_res = stdev(residuals) if len(residuals) > 1 else 0
-        mean_res = mean(residuals)
+        std_res = statistics.stdev(residuals) if len(residuals) > 1 else 0
+        mean_res = statistics.mean(residuals)
         
         outliers = [abs(r - mean_res) > threshold * std_res for r in residuals]
     else:
@@ -411,8 +411,8 @@ def adaptive_filter(series: TimeSeries, mu: float = 0.01,
 
 def _mad_variance_estimate(series: TimeSeries) -> float:
     """Estimate variance using median absolute deviation."""
-    median_val = median(series)
-    mad = median([abs(x - median_val) for x in series])
+    median_val = statistics.median(series)
+    mad = statistics.median([abs(x - median_val) for x in series])
     # Convert MAD to standard deviation estimate
     return (mad * 1.4826) ** 2
 
@@ -422,7 +422,7 @@ def _diff_variance_estimate(series: TimeSeries) -> float:
     diffs = [series[i+1] - series[i] for i in range(len(series) - 1)]
     if len(diffs) <= 1:
         return 0.0
-    return variance(diffs) / 2  # Divide by 2 for white noise
+    return statistics.variance(diffs) / 2  # Divide by 2 for white noise
 
 
 def _robust_noise_estimate(series: TimeSeries) -> float:
@@ -439,7 +439,7 @@ def _robust_noise_estimate(series: TimeSeries) -> float:
     if len(high_freq) == 0:
         return 0.0
     
-    mad = median([abs(x) for x in high_freq])
+    mad = statistics.median([abs(x) for x in high_freq])
     return mad * 1.4826 / math.sqrt(2)  # Scale for white noise
 
 
@@ -506,12 +506,12 @@ def _local_polynomial_smooth(data: List[float], degree: int, pos: int) -> float:
         return data[0] if data else 0.0
     
     if degree == 0:
-        return mean(data)
+        return statistics.mean(data)
     elif degree == 1:
         # Linear fit
         x = list(range(n))
-        x_mean = mean(x)
-        y_mean = mean(data)
+        x_mean = statistics.mean(x)
+        y_mean = statistics.mean(data)
         
         numerator = sum((x[i] - x_mean) * (data[i] - y_mean) for i in range(n))
         denominator = sum((x[i] - x_mean) ** 2 for i in range(n))
@@ -525,4 +525,4 @@ def _local_polynomial_smooth(data: List[float], degree: int, pos: int) -> float:
         return intercept + slope * pos
     else:
         # Higher order - fallback to mean
-        return mean(data)
+        return statistics.mean(data)
