@@ -1,0 +1,31 @@
+Metadata-Version: 2.4
+Name: tlm
+Version: 1.2.0
+Summary: Teaching library: NumPy-like API on pure Python lists + Data Science algos (NumPy-free)
+Home-page: https://github.com/organization/tlm
+Author: Rudy Martin
+Author-email: Rudy Martin <rudy@nextshiftconsulting.com>
+License: CC BY 4.0
+Project-URL: Homepage, https://github.com/rudymartin/tlm
+Project-URL: Bug Reports, https://github.com/rudymartin/tlm/issues
+Project-URL: Source, https://github.com/rudymartin/tlm
+Keywords: data science,machine learning,teaching,numpy-free,pure python
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Education
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# TLM Package - Updated Sat, Sep 20, 2025  1:15:36 PM
