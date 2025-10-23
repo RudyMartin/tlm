@@ -111,6 +111,22 @@ from .mf.matrix_factorization import fit_sgd as mf_fit_sgd, predict_full as mf_p
 # Attention mechanisms (LOCAL ADDITION)
 from .attention.scaled_dot_product import scaled_dot_product_attention, multi_head_attention, positional_encoding
 
+# Advanced similarity functions (TENSOR LOGIC ADDITION)
+from .core.similarity import (
+    pairwise_cosine,
+    top_k_similar,
+    pairwise_distances,
+    nearest_neighbors,
+)
+
+# Temperature scaling for reasoning control (TENSOR LOGIC ADDITION)
+from .core.temperature import (
+    temperature_scaled_softmax,
+    temperature_argmax,
+    apply_temperature,
+    temperature_schedule,
+)
+
 # Network analysis (GITHUB ADDITION)
 from .network import (
     # Core data structures
@@ -263,6 +279,10 @@ __all__ = [
     'mf_fit_sgd','mf_predict_full','mf_mse',
     # attention (LOCAL ADDITION)
     'scaled_dot_product_attention','multi_head_attention','positional_encoding',
+    # advanced similarity (TENSOR LOGIC ADDITION)
+    'pairwise_cosine','top_k_similar','pairwise_distances','nearest_neighbors',
+    # temperature scaling (TENSOR LOGIC ADDITION)
+    'temperature_scaled_softmax','temperature_argmax','apply_temperature','temperature_schedule',
     # network analysis (GITHUB ADDITION)
     'Graph','WeightedGraph',
     'degree_centrality','betweenness_centrality','closeness_centrality',
